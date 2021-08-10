@@ -1,0 +1,81 @@
+---
+Title: Amazon Books Sales 2009-2019
+Author: Fajrur Rahman Suprapto
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# load library
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(treemapify)
+library(ggthemes)
+```
+
+```{r}
+# read the data
+data <- read_csv("bestsellers with categories.csv")
+glimpse(data)
+```
+
+```{r}
+# Pie Chart
+data %>%
+  count(Genre) %>%
+  ggplot(aes(x = "", y = n, fill = Genre)) +
+  geom_col() +
+  geom_text(aes(label = n), position = position_stack(vjust = 0.5)) +
+  ggtitle("Total Books by Genre") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  coord_polar(theta = "y", start = 0) +
+  theme_void()
+```
+
+```{r}
+# Bar Chart
+data %>%
+  mutate(Year = as.character(Year)) %>%
+  group_by(Genre, Year) %>%
+  summarise(Count = n(), .groups = "drop") %>% 
+  ggplot(aes(x = Year, y = Count, fill = Genre)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="Year", y="Number of Books", title="Yearly Number of Books by Genre") +
+  theme(legend.position = "right", axis.text.x = element_text(vjust = 0.5))
+```
+
+```{r}
+# Bar Chart
+data %>%
+  group_by(Author) %>%
+  summarise(count = sum(n())) %>%
+  top_n(10) %>%
+  head(10) %>%
+  ggplot(aes(x = count, y = Author, fill = count)) +
+  geom_bar(stat = "identity") +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+  labs(x="Number of Books", y="Author", title="10 Most Author that Has Published")
+```
+
+```{r}
+# Treemap
+data %>%
+  select(Name, `User Rating`) %>%
+  distinct(Name, `User Rating`) %>%
+  filter(`User Rating` > 4.5) %>%
+  arrange(desc(`User Rating`)) %>%
+  top_n(10) %>%
+  head(10) %>%
+  ggplot(aes(area = `User Rating`, fill = Name, label = Name)) +
+  geom_treemap() +
+  geom_treemap_text(color="black", place="centre", grow = TRUE) +
+  theme_pander() +
+  scale_color_pander() +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+  labs(title="10 Best Book by User Rating")
+```
